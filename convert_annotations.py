@@ -4,6 +4,7 @@ import numpy as np
 from tqdm import tqdm
 import argparse
 import fileinput
+import shutil
 
 # function that turns XMin, YMin, XMax, YMax coordinates to normalized yolo format
 def convert(filename_str, coords):
@@ -24,6 +25,12 @@ def convert(filename_str, coords):
 
 ROOT_DIR = os.getcwd()
 
+# create classes.txt for the downloaded classes
+dirs = sorted(list(os.listdir(os.path.join("OID","Dataset","train"))))
+with open("classes.txt", "w") as f:
+    for dir in dirs:
+        f.write(dir+"\n")
+
 # create dict to map class names to numbers for yolo
 classes = {}
 with open("classes.txt", "r") as myFile:
@@ -40,17 +47,15 @@ for DIR in DIRS:
     if os.path.isdir(DIR):
         os.chdir(DIR)
         print("Currently in subdirectory:", DIR)
-        
+
         CLASS_DIRS = os.listdir(os.getcwd())
         # for all class folders step into directory to change annotations
         for CLASS_DIR in CLASS_DIRS:
             if os.path.isdir(CLASS_DIR):
                 os.chdir(CLASS_DIR)
-                print("Converting annotations for class: ", CLASS_DIR)
-                
+                print("Converting annotations for class: ", CLASS_DIR)        
                 # Step into Label folder where annotations are generated
                 os.chdir("Label")
-
                 for filename in tqdm(os.listdir(os.getcwd())):
                     filename_str = str.split(filename, ".")[0]
                     if filename.endswith(".txt"):
@@ -75,5 +80,8 @@ for DIR in DIRS:
                             outfile.close()
                         os.chdir("Label")
                 os.chdir("..")
-                os.chdir("..")
+                # Delete the Label directory from each folder
+                print("Deleting Label directory for :", CLASS_DIR)
+                shutil.rmtree("Label")
+                os.chdir("..")            
         os.chdir("..")
